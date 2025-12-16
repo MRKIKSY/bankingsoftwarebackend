@@ -481,6 +481,15 @@ def admin_credit(data: AdminCreditIn,
     session.commit()
     return {"detail": "Credit added"}
 
+# ----------------- ADMIN PENDING TRANSACTIONS -----------------
+@app.get("/admin/pending")
+def pending_transactions(admin: User = Depends(require_admin),
+                         session: Session = Depends(get_session)):
+    # Get all transactions with status = pending
+    txs = session.exec(select(Transaction).where(Transaction.status == "pending")).all()
+    return txs
+
+
 @app.post("/admin/approve/{tx_id}")
 def approve_tx(tx_id: int,
                admin: User = Depends(require_admin),
