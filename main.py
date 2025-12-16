@@ -254,6 +254,7 @@ from jose import jwt, JWTError
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Optional
+import os
 
 # ----------------- CONFIG -----------------
 SECRET_KEY = "CHANGE_THIS_SECRET"
@@ -261,8 +262,21 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
-sqlite_file_name = "bank.db"
-engine = create_engine(f"sqlite:///{sqlite_file_name}", connect_args={"check_same_thread": False})
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL not set")
+
+DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://")
+
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,
+    pool_pre_ping=True
+)
+
 
 # ----------------- MODELS -----------------
 class User(SQLModel, table=True):
