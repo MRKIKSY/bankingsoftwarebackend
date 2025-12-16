@@ -439,17 +439,21 @@ def withdraw(data: WithdrawIn,
     if data.amount <= 0:
         raise HTTPException(400, "Amount must be positive")
 
-    txs = session.exec(select(Transaction).where(Transaction.user_id == current_user.id)).all()
+    txs = session.exec(
+        select(Transaction).where(Transaction.user_id == current_user.id)
+    ).all()
     credits = sum(t.amount for t in txs if t.type == "credit" and t.status == "completed")
     debits = sum(t.amount for t in txs if t.type == "debit" and t.status == "completed")
+
     if data.amount > (credits - debits):
         raise HTTPException(400, "Insufficient funds")
 
+    # Use the reference input as the description
     new_tx = Transaction(
         user_id=current_user.id,
         type="debit",
         amount=data.amount,
-        description="External Transfer",
+        description=data.reference,  # <--- here
         routing_number=data.routing_number,
         account_number=data.account_number,
         check_number=data.check_number,
@@ -459,6 +463,7 @@ def withdraw(data: WithdrawIn,
     session.add(new_tx)
     session.commit()
     return {"detail": "Withdrawal submitted for approval"}
+
 
 # ----------------- ADMIN ENDPOINTS -----------------
 @app.post("/admin/credit")
