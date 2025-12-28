@@ -2,9 +2,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
-// require("./cron/investmentCron");
 
-// Routes
+// ================= CRON =================
+// If you are running cron inside the web service, keep this ON
+require("./cron/investmentCron");
+
+// ================= ROUTES =================
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const adminRoutes = require("./routes/admin");
@@ -17,41 +20,80 @@ const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
 const payRoutes = require("./routes/pay");
 const cronRoutes = require("./routes/cron");
 
-
-
-// Middleware
+// ================= MIDDLEWARE =================
 const { auth } = require("./middleware/auth");
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+/* ======================================================
+   CORS (LOCAL + RENDER FRONTEND)
+====================================================== */
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://bankingsoftware.onrender.com"
+];
 
-// Connect to MongoDB
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow server-to-server & Postman
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS not allowed"), false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
+// Important for preflight requests
+app.options("*", cors());
+
+app.use(express.json());
+
+/* ======================================================
+   DATABASE
+====================================================== */
 mongoose
   .connect(process.env.MONGO_URL)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
-// Routes
+/* ======================================================
+   ROUTES
+====================================================== */
 app.use("/auth", authRoutes);
 app.use("/", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invest", investRoutes);
 app.use("/cron", cronRoutes);
 
-// Routes requiring authentication
+// Auth-protected routes
 app.use("/remind", auth, remindRoute);
 
 // Other routes
 app.use("/notify-admin", notifyAdminRoute);
-app.use("/invest", investCancelRoute); // cancels investment
-app.use("/invest/admin", adminApproveInvestment); // approve investments
-app.use("/admin", adminApproveWithdrawal); // approve withdrawals
+app.use("/invest", investCancelRoute);
+app.use("/invest/admin", adminApproveInvestment);
+app.use("/admin", adminApproveWithdrawal);
 app.use("/pay", payRoutes);
 
+/* ======================================================
+   HEALTH CHECK
+====================================================== */
+app.get("/", (req, res) => {
+  res.json({ status: "Backend running 🚀" });
+});
 
-// Start server
+/* ======================================================
+   SERVER
+====================================================== */
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
