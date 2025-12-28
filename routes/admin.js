@@ -119,4 +119,34 @@ router.get("/investments", auth, adminOnly, async (req, res) => {
   }
 });
 
+
+/* ================= WITHDRAWALS (ADMIN) ================= */
+router.get("/withdrawals", auth, adminOnly, async (req, res) => {
+  try {
+    const withdrawals = await Transaction.find({
+      type: "debit"
+    }).sort({ created_at: -1 });
+
+    res.json(withdrawals);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch withdrawals" });
+  }
+});
+
+/* ================= USER WALLETS (ADMIN) ================= */
+router.get("/wallets", auth, adminOnly, async (req, res) => {
+  try {
+    const users = await User.find(
+      {},
+      "username email bank_name account_number account_name"
+    );
+
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch wallets" });
+  }
+});
+
 module.exports = router;
