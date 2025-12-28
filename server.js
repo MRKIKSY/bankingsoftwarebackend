@@ -18,7 +18,7 @@ const investCancelRoute = require("./routes/investCancel");
 const adminApproveInvestment = require("./routes/adminApproveInvestment");
 const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
 const payRoutes = require("./routes/pay");
-const cronRoutes = require("./routes/cron");
+
 
 // ================= MIDDLEWARE =================
 const { auth } = require("./middleware/auth");
