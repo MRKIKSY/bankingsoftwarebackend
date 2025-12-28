@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
-require("./cron/investmentCron");
+// require("./cron/investmentCron");
 
 // Routes
 const authRoutes = require("./routes/auth");
@@ -15,6 +15,9 @@ const investCancelRoute = require("./routes/investCancel");
 const adminApproveInvestment = require("./routes/adminApproveInvestment");
 const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
 const payRoutes = require("./routes/pay");
+const cronRoutes = require("./routes/cron");
+
+
 
 // Middleware
 const { auth } = require("./middleware/auth");
@@ -36,6 +39,7 @@ app.use("/auth", authRoutes);
 app.use("/", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invest", investRoutes);
+app.use("/cron", cronRoutes);
 
 // Routes requiring authentication
 app.use("/remind", auth, remindRoute);
@@ -46,6 +50,7 @@ app.use("/invest", investCancelRoute); // cancels investment
 app.use("/invest/admin", adminApproveInvestment); // approve investments
 app.use("/admin", adminApproveWithdrawal); // approve withdrawals
 app.use("/pay", payRoutes);
+
 
 // Start server
 const PORT = process.env.PORT || 8000;

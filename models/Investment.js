@@ -19,6 +19,10 @@ const InvestmentSchema = new mongoose.Schema({
   maturity_date: { type: Date, required: true },
 
   moved_to_balance: { type: Boolean, default: false },
+     matured_processed: {
+    type: Boolean,
+    default: false
+  },
 
   created_at: { type: Date, default: Date.now }
 });

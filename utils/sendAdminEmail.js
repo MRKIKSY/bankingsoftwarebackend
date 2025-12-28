@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport({
 
 transporter.sendMail({
   from: `"LOCAL INVEST NG" <${process.env.EMAIL_USER}>`,
-  to: "yourpersonalemail@gmail.com",
+  to: "samuel.akinola@rocketmail.com",
   subject: "Test Email",
   html: "<p>This is a test</p>",
 }, (err, info) => {
