@@ -29,7 +29,7 @@ router.post("/init", auth, async (req, res) => {
       {
         email: user.email || `${user.username}@localinvest.ng`,
         amount: Number(amount) * 100,
-        callback_url: "http://localhost:3000/paystack-success",
+        callback_url: "https://bankingsoftware.onrender.com/paystack-success",
         metadata: {
           username: user.username,
           amount: Number(amount),
@@ -55,7 +55,8 @@ router.post("/init", auth, async (req, res) => {
 /* =====================================================
    VERIFY PAYSTACK PAYMENT
 ===================================================== */
-router.get("/verify/:reference", auth, async (req, res) => {
+router.get("/verify/:reference", async (req, res) => {
+
   try {
     const reference = req.params.reference;
 
