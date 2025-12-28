@@ -1,6 +1,8 @@
 const express = require("express");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
+const Investment = require("../models/Investment");
+
 const { auth, adminOnly } = require("../middleware/auth");
 
 const router = express.Router();
@@ -194,5 +196,44 @@ router.get("/investments", auth, adminOnly, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch investments" });
   }
 });
+
+router.get("/user/:username", auth, async (req, res) => {
+  if (!req.user.is_admin) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  const { username } = req.params;
+
+  const user = await User.findOne({ username });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  // Transactions
+  const transactions = await Transaction.find({ user_id: username })
+    .sort({ created_at: -1 });
+
+  // ✅ APPROVED INVESTMENTS (THIS WAS MISSING)
+  const investments = await Investment.find({
+    user: username,
+    status: "approved"
+  }).sort({ maturity_date: 1 });
+
+  const credits = transactions
+    .filter(t => t.type === "credit" && t.status === "completed")
+    .reduce((a, b) => a + b.amount, 0);
+
+  const debits = transactions
+    .filter(t => t.type === "debit" && t.status === "completed")
+    .reduce((a, b) => a + b.amount, 0);
+
+  res.json({
+    user,
+    balance: credits - debits,
+    credits,
+    debits,
+    transactions,
+    investments // ✅ NOW SENT TO FRONTEND
+  });
+});
+
 
 module.exports = router;
