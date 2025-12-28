@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-// ================= CRON =================
+const app = express(); // ✅ MUST BE FIRST
 
+// ================= CRON =================
 require("./cron/investmentCron");
 
 // ================= ROUTES =================
@@ -18,15 +19,18 @@ const investCancelRoute = require("./routes/investCancel");
 const adminApproveInvestment = require("./routes/adminApproveInvestment");
 const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
 const payRoutes = require("./routes/pay");
-
+const paystackWebhook = require("./routes/paystackWebhook");
 
 // ================= MIDDLEWARE =================
 const { auth } = require("./middleware/auth");
 
-const app = express();
+/* ======================================================
+   🔥 PAYSTACK WEBHOOK (MUST COME BEFORE JSON)
+====================================================== */
+app.use("/paystack", paystackWebhook);
 
 /* ======================================================
-   CORS (LOCAL + RENDER FRONTEND)
+   CORS
 ====================================================== */
 const allowedOrigins = [
   "http://localhost:3000",
@@ -48,7 +52,11 @@ app.use(
   })
 );
 
+/* ======================================================
+   BODY PARSERS (AFTER WEBHOOK)
+====================================================== */
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 /* ======================================================
    DATABASE
@@ -66,7 +74,6 @@ app.use("/", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invest", investRoutes);
 
-
 // Auth protected
 app.use("/remind", auth, remindRoute);
 
@@ -80,7 +87,7 @@ app.use("/pay", payRoutes);
 /* ======================================================
    HEALTH CHECK
 ====================================================== */
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({ status: "Backend running 🚀" });
 });
 
