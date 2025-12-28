@@ -70,4 +70,52 @@ router.get("/transactions", auth, async (req, res) => {
   }
 });
 
+/* ================= WITHDRAW REQUEST ================= */
+router.post("/withdraw", auth, async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid withdrawal amount" });
+    }
+
+    // Get completed transactions
+    const txs = await Transaction.find({
+      user_id: req.user.username,
+      status: "completed"
+    });
+
+    const credits = txs
+      .filter(t => t.type === "credit")
+      .reduce((a, b) => a + b.amount, 0);
+
+    const debits = txs
+      .filter(t => t.type === "debit")
+      .reduce((a, b) => a + b.amount, 0);
+
+    const availableBalance = credits - debits;
+
+    if (amount > availableBalance) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    // Create pending withdrawal
+    await Transaction.create({
+      user_id: req.user.username,
+      type: "debit",
+      amount,
+      status: "pending",
+      description: "Withdrawal request"
+    });
+
+    res.json({
+      detail: "Withdrawal request submitted successfully"
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Withdrawal failed" });
+  }
+});
+
+
 module.exports = router;
