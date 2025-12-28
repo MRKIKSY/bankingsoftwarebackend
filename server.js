@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 // ================= CRON =================
+
 require("./cron/investmentCron");
 
 // ================= ROUTES =================
@@ -64,7 +65,7 @@ app.use("/auth", authRoutes);
 app.use("/", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invest", investRoutes);
-app.use("/cron", cronRoutes);
+
 
 // Auth protected
 app.use("/remind", auth, remindRoute);
