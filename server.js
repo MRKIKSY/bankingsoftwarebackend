@@ -4,7 +4,6 @@ const cors = require("cors");
 require("dotenv").config();
 
 // ================= CRON =================
-// If you are running cron inside the web service, keep this ON
 require("./cron/investmentCron");
 
 // ================= ROUTES =================
@@ -35,24 +34,18 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // allow server-to-server & Postman
+    origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-
-      return callback(new Error("CORS not allowed"), false);
+      callback(new Error("CORS not allowed"));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
-
-// Important for preflight requests
-app.options("*", cors());
 
 app.use(express.json());
 
@@ -73,7 +66,7 @@ app.use("/admin", adminRoutes);
 app.use("/invest", investRoutes);
 app.use("/cron", cronRoutes);
 
-// Auth-protected routes
+// Auth protected
 app.use("/remind", auth, remindRoute);
 
 // Other routes
