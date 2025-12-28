@@ -149,4 +149,43 @@ router.get("/wallets", auth, adminOnly, async (req, res) => {
   }
 });
 
+
+router.post("/withdraw/approve/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const tx = await Transaction.findById(req.params.id);
+    if (!tx) return res.status(404).json({ error: "Withdrawal not found" });
+
+    if (tx.status !== "pending") {
+      return res.status(400).json({ error: "Already processed" });
+    }
+
+    tx.status = "completed";
+    await tx.save();
+
+    res.json({ detail: "Withdrawal approved" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Approval failed" });
+  }
+});
+
+router.post("/withdraw/reject/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const tx = await Transaction.findById(req.params.id);
+    if (!tx) return res.status(404).json({ error: "Withdrawal not found" });
+
+    if (tx.status !== "pending") {
+      return res.status(400).json({ error: "Already processed" });
+    }
+
+    tx.status = "rejected";
+    await tx.save();
+
+    res.json({ detail: "Withdrawal rejected" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Rejection failed" });
+  }
+});
+
 module.exports = router;
