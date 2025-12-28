@@ -183,4 +183,16 @@ router.post("/admin/approve/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
+router.get("/investments", auth, adminOnly, async (req, res) => {
+  try {
+    const investments = await Investment.find()
+      .sort({ maturity_date: 1 });
+
+    res.json(investments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch investments" });
+  }
+});
+
 module.exports = router;
