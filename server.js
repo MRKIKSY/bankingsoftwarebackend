@@ -33,8 +33,8 @@ app.use("/paystack", paystackWebhook);
    CORS
 ====================================================== */
 const allowedOrigins = [
-  "http://localhost:3000",
-  "https://bankingsoftware.onrender.com"
+  "https://www.localnairainvest.com",
+  "https://api.localnairainvest.com"
 ];
 
 app.use(

@@ -29,7 +29,7 @@ router.post("/init", auth, async (req, res) => {
       {
         email: user.email || `${user.username}@localinvest.ng`,
         amount: Number(amount) * 100,
-        callback_url: "https://bankingsoftware.onrender.com/paystack-success",
+        callback_url: "https://www.localnairainvest.com/paystack-success",
         metadata: {
           username: user.username,
           amount: Number(amount),
