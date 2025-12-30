@@ -16,6 +16,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
     "nodemon": "^3.1.11",
+    "twilio": "^5.11.1",
     "unix-crypt-td-js": "^1.1.4"
   },
   "devDependencies": {
