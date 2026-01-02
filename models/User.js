@@ -19,6 +19,11 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
 
+    signup_code: {
+    type: String,
+    required: false   // set to false if you want it optional
+  },
+
   is_admin: {
     type: Boolean,
     default: false
