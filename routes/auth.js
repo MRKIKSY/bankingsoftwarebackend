@@ -1,5 +1,4 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
@@ -7,9 +6,9 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-/* ======================
-   EMAIL TRANSPORTER
-====================== */
+// ======================
+// EMAIL TRANSPORTER
+// ======================
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -18,86 +17,71 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/* ======================
-   FORGOT PASSWORD
-====================== */
+// ======================
+// REQUEST OTP
+// ======================
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ detail: "Email is required" });
-    }
+    if (!email) return res.status(400).json({ detail: "Email required" });
 
     const user = await User.findOne({ email });
+    if (!user) return res.json({ detail: "If email exists, OTP sent" }); // never reveal existence
 
-    // ✅ Security: never reveal existence
-    if (!user) {
-      return res.json({ detail: "If email exists, reset link sent" });
-    }
-
-    const token = crypto.randomBytes(32).toString("hex");
-
-    user.reset_token = token;
-    user.reset_token_expiry = Date.now() + 30 * 60 * 1000;
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.reset_otp = otp;
+    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000; // 15 min expiry
     await user.save();
 
-    const resetLink = `https://www.localnairainvest.com/reset-password/${token}`;
-
+    // Send OTP via email
     await transporter.sendMail({
       from: `"Local Naira Invest" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Reset Your Password",
-      html: `
-        <p>You requested a password reset.</p>
-        <p>
-          <a href="${resetLink}">
-            Click here to reset your password
-          </a>
-        </p>
-        <p>This link expires in 30 minutes.</p>
-      `,
+      subject: "Your Password Reset OTP",
+      html: `<p>Your password reset OTP is <b>${otp}</b>. It expires in 15 minutes.</p>`,
     });
 
-    res.json({ detail: "Reset link sent" });
+    res.json({ detail: "OTP sent if email exists" });
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err);
     res.status(500).json({ detail: "Server error" });
   }
 });
 
-/* ======================
-   RESET PASSWORD
-====================== */
-router.post("/reset-password/:token", async (req, res) => {
+// ======================
+// RESET PASSWORD USING OTP
+// ======================
+router.post("/reset-password-otp", async (req, res) => {
   try {
-    const { password } = req.body;
-    const { token } = req.params;
+    const { email, otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({ detail: "All fields are required" });
+    }
 
     const user = await User.findOne({
-      reset_token: token,
-      reset_token_expiry: { $gt: Date.now() },
+      email,
+      reset_otp: otp,
+      reset_otp_expiry: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).json({
-        detail: "Invalid or expired token",
-      });
+      return res.status(400).json({ detail: "Invalid OTP or expired" });
     }
 
+    // Update password
     user.password = await bcrypt.hash(password, 10);
-    user.reset_token = undefined;
-    user.reset_token_expiry = undefined;
+    user.reset_otp = undefined;
+    user.reset_otp_expiry = undefined;
     await user.save();
 
     res.json({ detail: "Password reset successful" });
   } catch (err) {
-    console.error("RESET PASSWORD ERROR:", err);
+    console.error("RESET PASSWORD OTP ERROR:", err);
     res.status(500).json({ detail: "Server error" });
   }
 });
-
-
 /**
  * ======================
  * REGISTER
