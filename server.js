@@ -91,10 +91,17 @@ app.get("/health", (req, res) => {
 });
 
 /* ======================================================
+  /* ======================================================
    SERVE REACT APP (Production)
 ====================================================== */
-const buildPath = path.join(__dirname, "client/build"); // adjust if your React build folder is elsewhere
+const buildPath = path.join(__dirname, "client/build");
 app.use(express.static(buildPath));
+
+// React SPA fallback
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
+});
+
 
 // Return index.html for any unknown route (so React Router works)
 app.get("*", (req, res) => {
