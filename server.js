@@ -1,9 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path"); // <-- new
 require("dotenv").config();
 
-const app = express(); // ✅ MUST BE FIRST
+const app = express(); // MUST BE FIRST
 
 // ================= CRON =================
 require("./cron/investmentCron");
@@ -21,12 +22,11 @@ const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
 const payRoutes = require("./routes/pay");
 const paystackWebhook = require("./routes/paystackWebhook");
 
-
 // ================= MIDDLEWARE =================
 const { auth } = require("./middleware/auth");
 
 /* ======================================================
-   🔥 PAYSTACK WEBHOOK (MUST COME BEFORE JSON)
+   PAYSTACK WEBHOOK (MUST COME BEFORE JSON)
 ====================================================== */
 app.use("/paystack", paystackWebhook);
 
@@ -42,9 +42,7 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error("CORS not allowed"));
     },
     credentials: true,
@@ -65,10 +63,10 @@ app.use(express.urlencoded({ extended: true }));
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
+  .catch((err) => console.error("❌ MongoDB error:", err));
 
 /* ======================================================
-   ROUTES
+   API ROUTES
 ====================================================== */
 app.use("/auth", authRoutes);
 app.use("/", userRoutes);
@@ -90,6 +88,17 @@ app.use("/pay", payRoutes);
 ====================================================== */
 app.get("/health", (req, res) => {
   res.json({ status: "Backend running 🚀" });
+});
+
+/* ======================================================
+   SERVE REACT APP (Production)
+====================================================== */
+const buildPath = path.join(__dirname, "client/build"); // adjust if your React build folder is elsewhere
+app.use(express.static(buildPath));
+
+// Return index.html for any unknown route (so React Router works)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
 });
 
 /* ======================================================
