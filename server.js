@@ -194,16 +194,14 @@ app.get("/health", (req, res) => {
 /* ======================================================
    SERVE REACT FRONTEND
 ====================================================== */
-const buildPath = path.join(__dirname, "frontend/build");
-app.use(express.static(buildPath));
+// Serve React static files
+app.use(express.static(path.join(__dirname, "frontend/build")));
 
-// Catch-all for React Router (ignore API routes)
-app.get(
-  /^\/(?!auth|invest|admin|pay|remind|notify-admin).*/,
-  (req, res) => {
-    res.sendFile(path.join(buildPath, "index.html"));
-  }
-);
+// Catch-all for React Router (must be **after all API routes**)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend/build", "index.html"));
+});
+
 
 /* ======================================================
    SERVER
