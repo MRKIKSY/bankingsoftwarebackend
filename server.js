@@ -192,9 +192,10 @@ app.get("/health", (req, res) => {
 });
 
 /* ======================================================
+ /* ======================================================
    SERVE REACT FRONTEND
 ====================================================== */
-const buildPath = path.join(__dirname, "frontend/build");
+const buildPath = path.join(__dirname, "build"); // <-- corrected
 app.use(express.static(buildPath));
 
 // Catch-all for React Router (ignore API routes)
@@ -204,6 +205,7 @@ app.get(
     res.sendFile(path.join(buildPath, "index.html"));
   }
 );
+
 
 /* ======================================================
    SERVER
