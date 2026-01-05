@@ -99,12 +99,10 @@
 // app.listen(PORT, () => {
 //   console.log(`🚀 Server running on port ${PORT}`);
 // });
-
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path"); // <-- new
+const path = require("path");
 require("dotenv").config();
 
 const app = express(); // MUST BE FIRST
@@ -138,7 +136,7 @@ app.use("/paystack", paystackWebhook);
 ====================================================== */
 const allowedOrigins = [
   "https://www.localnairainvest.com",
-  "https://api.localnairainvest.com"
+  "https://api.localnairainvest.com",
 ];
 
 app.use(
@@ -150,12 +148,12 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 /* ======================================================
-   BODY PARSERS (AFTER WEBHOOK)
+   BODY PARSERS
 ====================================================== */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -193,18 +191,19 @@ app.get("/health", (req, res) => {
   res.json({ status: "Backend running 🚀" });
 });
 
+/* ======================================================
+   SERVE REACT FRONTEND
+====================================================== */
+const buildPath = path.join(__dirname, "frontend/build");
+app.use(express.static(buildPath));
 
-
-
-
-// Serve static files from the React frontend build
-app.use(express.static(path.join(__dirname, "frontend/build")));
-
-// Catch-all route to send back React's index.html for SPA routing
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend/build", "index.html"));
-});
-
+// Catch-all for React Router (ignore API routes)
+app.get(
+  /^\/(?!auth|invest|admin|pay|remind|notify-admin).*/,
+  (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
+  }
+);
 
 /* ======================================================
    SERVER
