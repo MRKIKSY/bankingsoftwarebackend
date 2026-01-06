@@ -110,8 +110,7 @@
 // const PORT = process.env.PORT || 8000;
 // app.listen(PORT, () => {
 //   console.log(`🚀 Server running on port ${PORT}`);
-// });
-
+// });// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -139,8 +138,7 @@ const paystackWebhook = require("./routes/paystackWebhook");
 // ================= MIDDLEWARE =================
 const { auth } = require("./middleware/auth");
 
-// ================= PAYSTACK WEBHOOK =================
-// Must come before JSON parser
+// ================= PAYSTACK WEBHOOK (must come before JSON parsers) =================
 app.use("/paystack", paystackWebhook);
 
 // ================= CORS =================
@@ -170,7 +168,7 @@ app.use(express.urlencoded({ extended: true }));
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // ================= API ROUTES =================
 app.use("/auth", authRoutes);
@@ -178,7 +176,7 @@ app.use("/", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invest", investRoutes);
 
-// Auth protected
+// Protected routes
 app.use("/remind", auth, remindRoute);
 
 // Other routes
@@ -194,30 +192,18 @@ app.get("/health", (req, res) => {
 });
 
 // ================= SERVE REACT FRONTEND =================
-const buildPath = path.join(__dirname, "build"); // <-- React build folder
+const buildPath = path.join(__dirname, "build");
 app.use(express.static(buildPath));
 
-// Catch-all for React Router (serve index.html for all non-API routes)
-app.get("*", (req, res) => {
-  // Ignore API routes
-  const apiRoutes = [
-    "/auth",
-    "/invest",
-    "/admin",
-    "/pay",
-    "/remind",
-    "/notify-admin",
-    "/paystack",
-  ];
-
-  if (apiRoutes.some((route) => req.path.startsWith(route))) {
-    return res.status(404).json({ detail: "Not Found" });
+// Catch-all for React routes (ignores API routes)
+app.get(
+  /^\/(?!auth|invest|admin|pay|remind|notify-admin|paystack).*$/,
+  (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
   }
+);
 
-  res.sendFile(path.join(buildPath, "index.html"));
-});
-
-// ================= SERVER =================
+// ================= START SERVER =================
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
