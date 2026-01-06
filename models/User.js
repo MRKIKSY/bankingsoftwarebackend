@@ -28,16 +28,14 @@ const UserSchema = new mongoose.Schema({
     default: Date.now,
   },
 
-  // 🔐 PASSWORD RESET FIELDS
-  reset_token: {
+  // 🔐 PASSWORD RESET (OTP)
+  reset_otp: {
     type: String,
   },
 
-  reset_token_expiry: {
+  reset_otp_expiry: {
     type: Date,
   },
 });
 
 module.exports = mongoose.model("User", UserSchema);
-
-

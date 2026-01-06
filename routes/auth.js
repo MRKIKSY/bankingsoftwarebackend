@@ -24,54 +24,35 @@ const transporter = nodemailer.createTransport({
 // ======================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
+
     if (!email) {
       return res.status(400).json({ detail: "Email required" });
     }
 
+    email = email.toLowerCase().trim();
+
     const user = await User.findOne({ email });
 
-    // Always respond same (security)
+    // Always same response (security)
     if (!user) {
       return res.json({ detail: "If email exists, instructions sent" });
     }
 
-    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.reset_otp = otp;
-    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000;
+    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000; // 15 mins
     await user.save();
-
-    // FRONTEND RESET PAGE
-    const resetLink = "https://www.localnairainvest.com/reset-password-otp";
 
     await transporter.sendMail({
       from: `"Local Naira Invest" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Reset Your Local Naira Invest Password",
+      subject: "Reset Your Password",
       html: `
-        <p>You requested a password reset.</p>
-
-        <p>
-          <b>Your One-Time Password (OTP):</b><br/>
-          <h2 style="letter-spacing:3px">${otp}</h2>
-        </p>
-
-        <p>
-          Click the link below to reset your password:
-        </p>
-
-        <p>
-          <a href="${resetLink}" target="_blank">
-            Reset Password
-          </a>
-        </p>
-
-        <p>
-          This OTP expires in <b>15 minutes</b>.<br/>
-          If you did not request this, please ignore this email.
-        </p>
+        <p>Your OTP:</p>
+        <h2>${otp}</h2>
+        <p>Expires in 15 minutes.</p>
       `,
     });
 
@@ -92,7 +73,7 @@ router.post("/reset-password-otp", async (req, res) => {
     }
 
     email = email.toLowerCase().trim();
-    otp = otp.toString().trim();
+    otp = otp.trim();
 
     const user = await User.findOne({
       email,
@@ -111,11 +92,13 @@ router.post("/reset-password-otp", async (req, res) => {
     await user.save();
 
     res.json({ detail: "Password reset successful" });
+
   } catch (err) {
-    console.error("RESET PASSWORD OTP ERROR:", err);
+    console.error("RESET PASSWORD ERROR:", err);
     res.status(500).json({ detail: "Server error" });
   }
 });
+
 
 /**
  * ======================
