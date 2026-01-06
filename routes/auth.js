@@ -25,26 +25,58 @@ const transporter = nodemailer.createTransport({
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ detail: "Email required" });
+    if (!email) {
+      return res.status(400).json({ detail: "Email required" });
+    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.json({ detail: "If email exists, OTP sent" }); // never reveal existence
+
+    // Always respond same (security)
+    if (!user) {
+      return res.json({ detail: "If email exists, instructions sent" });
+    }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     user.reset_otp = otp;
-    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000; // 15 min expiry
+    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    // Send OTP via email
+    // FRONTEND RESET PAGE
+    const resetLink = "https://www.localnairainvest.com/reset-password-otp";
+
     await transporter.sendMail({
       from: `"Local Naira Invest" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Your Password Reset OTP",
-      html: `<p>Your password reset OTP is <b>${otp}</b>. It expires in 15 minutes.</p>`,
+      subject: "Reset Your Local Naira Invest Password",
+      html: `
+        <p>You requested a password reset.</p>
+
+        <p>
+          <b>Your One-Time Password (OTP):</b><br/>
+          <h2 style="letter-spacing:3px">${otp}</h2>
+        </p>
+
+        <p>
+          Click the link below to reset your password:
+        </p>
+
+        <p>
+          <a href="${resetLink}" target="_blank">
+            Reset Password
+          </a>
+        </p>
+
+        <p>
+          This OTP expires in <b>15 minutes</b>.<br/>
+          If you did not request this, please ignore this email.
+        </p>
+      `,
     });
 
-    res.json({ detail: "OTP sent if email exists" });
+    res.json({ detail: "If email exists, instructions sent" });
+
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err);
     res.status(500).json({ detail: "Server error" });
