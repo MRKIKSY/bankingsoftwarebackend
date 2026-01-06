@@ -31,28 +31,44 @@ router.post("/forgot-password", async (req, res) => {
     }
 
     email = email.toLowerCase().trim();
-
     const user = await User.findOne({ email });
 
-    // Always same response (security)
+    // Always respond the same for security
     if (!user) {
       return res.json({ detail: "If email exists, instructions sent" });
     }
 
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
     user.reset_otp = otp;
-    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000; // 15 mins
+    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000; // 15 minutes
     await user.save();
+
+    // Link to the frontend reset page
+    const resetLink = `https://www.localnairainvest.com/reset-password-otp?email=${encodeURIComponent(user.email)}`;
 
     await transporter.sendMail({
       from: `"Local Naira Invest" <${process.env.EMAIL_USER}>`,
       to: user.email,
-      subject: "Reset Your Password",
+      subject: "Reset Your Local Naira Invest Password",
       html: `
-        <p>Your OTP:</p>
-        <h2>${otp}</h2>
-        <p>Expires in 15 minutes.</p>
+        <p>You requested a password reset.</p>
+
+        <p>
+          <b>Your One-Time Password (OTP):</b>
+          <h2>${otp}</h2>
+          <small>Expires in 15 minutes</small>
+        </p>
+
+        <p>
+          Click the link below to open the reset password page:
+        </p>
+
+        <p>
+          <a href="${resetLink}" target="_blank">Reset Password</a>
+        </p>
+
+        <p>If you did not request this, ignore this email.</p>
       `,
     });
 
