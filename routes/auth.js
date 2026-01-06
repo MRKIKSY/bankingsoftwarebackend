@@ -83,16 +83,16 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// ======================
-// RESET PASSWORD USING OTP
-// ======================
 router.post("/reset-password-otp", async (req, res) => {
   try {
-    const { email, otp, password } = req.body;
+    let { email, otp, password } = req.body;
 
     if (!email || !otp || !password) {
       return res.status(400).json({ detail: "All fields are required" });
     }
+
+    email = email.toLowerCase().trim();
+    otp = otp.toString().trim();
 
     const user = await User.findOne({
       email,
@@ -104,10 +104,10 @@ router.post("/reset-password-otp", async (req, res) => {
       return res.status(400).json({ detail: "Invalid OTP or expired" });
     }
 
-    // Update password
     user.password = await bcrypt.hash(password, 10);
     user.reset_otp = undefined;
     user.reset_otp_expiry = undefined;
+
     await user.save();
 
     res.json({ detail: "Password reset successful" });
@@ -116,6 +116,7 @@ router.post("/reset-password-otp", async (req, res) => {
     res.status(500).json({ detail: "Server error" });
   }
 });
+
 /**
  * ======================
  * REGISTER
