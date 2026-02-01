@@ -77,9 +77,10 @@ const UserSchema = new mongoose.Schema({
   },
 
   signup_code: {
-    type: String,
-    required: true,
-  },
+  type: String,
+  required: false,
+},
+
 
   is_admin: {
     type: Boolean,
