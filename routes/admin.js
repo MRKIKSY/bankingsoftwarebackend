@@ -213,4 +213,17 @@ router.post("/remind/:username", auth, adminOnly, async (req, res) => {
   }
 });
 
+/* ================= USERS CONTACT INFO ================= */
+router.get("/users/contact", auth, adminOnly, async (req, res) => {
+  try {
+    // Fetch all users, only select username, email, and phone
+    const users = await User.find({}, "username email phone");
+
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch users' contact info" });
+  }
+});
+
 module.exports = router;
