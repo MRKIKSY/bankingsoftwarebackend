@@ -2,8 +2,7 @@ const express = require("express");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Investment = require("../models/Investment");
-const sendReminder = require("../routes/remind"); 
-// adjust path if needed
+const sendReminder = require("../routes/remind");
 
 const { auth, adminOnly } = require("../middleware/auth");
 
@@ -55,6 +54,7 @@ router.get("/users", auth, adminOnly, async (req, res) => {
         return {
           username: user.username,
           email: user.email,
+          phone: user.phone,            // ✅ ADDED
           is_admin: user.is_admin,
           balance: credits - debits,
           total_credits: credits,
@@ -121,7 +121,6 @@ router.get("/investments", auth, adminOnly, async (req, res) => {
   }
 });
 
-
 /* ================= WITHDRAWALS (ADMIN) ================= */
 router.get("/withdrawals", auth, adminOnly, async (req, res) => {
   try {
@@ -150,7 +149,6 @@ router.get("/wallets", auth, adminOnly, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch wallets" });
   }
 });
-
 
 router.post("/withdraw/approve/:id", auth, adminOnly, async (req, res) => {
   try {
@@ -190,21 +188,15 @@ router.post("/withdraw/reject/:id", auth, adminOnly, async (req, res) => {
   }
 });
 
-
 /* ================= SEND USER REMINDER ================= */
 router.post("/remind/:username", auth, adminOnly, async (req, res) => {
   try {
     const { username } = req.params;
 
     const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // CALL YOUR REMINDER LOGIC
-    await sendReminder(user); 
-    // 👆 if your function expects username only:
-    // await sendReminder(username);
+    await sendReminder(user);
 
     res.json({ detail: "Reminder sent successfully" });
   } catch (err) {
@@ -216,9 +208,7 @@ router.post("/remind/:username", auth, adminOnly, async (req, res) => {
 /* ================= USERS CONTACT INFO ================= */
 router.get("/users/contact", auth, adminOnly, async (req, res) => {
   try {
-    // Fetch all users, only select username, email, and phone
     const users = await User.find({}, "username email phone");
-
     res.json(users);
   } catch (err) {
     console.error(err);
