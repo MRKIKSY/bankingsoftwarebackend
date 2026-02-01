@@ -120,37 +120,50 @@ router.post("/reset-password-otp", async (req, res) => {
  * ======================
  * REGISTER
  * ======================
- */
-router.post("/register", async (req, res) => {
+ */router.post("/register", async (req, res) => {
   try {
-    const { username, email, password, address, signup_code, is_admin } = req.body;
+    const {
+      username,
+      email,
+      phone,
+      password,
+      address,
+      signup_code,
+      is_admin
+    } = req.body;
 
-    if (!username || !email || !password || !address || !signup_code) {
+    // ---------------- VALIDATION ----------------
+    if (!username || !email || !phone || !password || !address || !signup_code) {
       return res.status(400).json({
         detail: "Missing required fields"
       });
     }
 
-    // Check if username or email exists
+    // Normalize phone
+    const cleanPhone = phone.replace(/\s+/g, "");
+
+    // ---------------- DUPLICATE CHECK ----------------
     const exists = await User.findOne({
-      $or: [{ username }, { email }]
+      $or: [{ username }, { email }, { phone: cleanPhone }]
     });
 
     if (exists) {
       return res.status(400).json({
-        detail: "Username or email already exists"
+        detail: "Username, email or phone already exists"
       });
     }
 
-    // Hash password
+    // ---------------- HASH PASSWORD ----------------
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ---------------- CREATE USER ----------------
     await User.create({
       username,
       email,
+      phone: cleanPhone,
       password: hashedPassword,
       address,
-      signup_code,              // ✅ ADDED
+      signup_code,
       is_admin: !!is_admin
     });
 
