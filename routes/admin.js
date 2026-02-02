@@ -31,10 +31,13 @@ router.post("/credit", auth, adminOnly, async (req, res) => {
   }
 });
 
+
 /* ================= ALL USERS ================= */
 router.get("/users", auth, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({}, "-password").lean();
+    const users = await User.find()
+      .select("username email phone is_admin")
+      .lean();
 
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
@@ -54,7 +57,7 @@ router.get("/users", auth, adminOnly, async (req, res) => {
         return {
           username: user.username,
           email: user.email,
-          phone: user.phone,          // ✅ THIS WAS MISSING IN PRODUCTION
+          phone: user.phone,        // ✅ NOW WILL SHOW
           is_admin: user.is_admin,
           balance: credits - debits,
           total_credits: credits,
@@ -72,13 +75,15 @@ router.get("/users", auth, adminOnly, async (req, res) => {
 
 
 
+
 /* ================= SINGLE USER (FULL VIEW) ================= */
 router.get("/user/:username", auth, adminOnly, async (req, res) => {
   try {
     const { username } = req.params;
 
-    const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ error: "User not found" });
+  const user = await User.findOne({ username }).select("-password");
+if (!user) return res.status(404).json({ error: "User not found" });
+
 
     const transactions = await Transaction.find({ user_id: username })
       .sort({ created_at: -1 });
