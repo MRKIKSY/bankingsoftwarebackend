@@ -34,7 +34,9 @@ router.post("/credit", auth, adminOnly, async (req, res) => {
 /* ================= ALL USERS ================= */
 router.get("/users", auth, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({}, "-password");
+    const users = await User.find({}, "-password").lean(); // ✅ important
+
+    console.log("RAW USERS FROM DB:", users); // ✅ debug
 
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
@@ -54,7 +56,7 @@ router.get("/users", auth, adminOnly, async (req, res) => {
         return {
           username: user.username,
           email: user.email,
-          phone: user.phone,            // ✅ ADDED
+          phone: user.phone, // ✅
           is_admin: user.is_admin,
           balance: credits - debits,
           total_credits: credits,
@@ -63,12 +65,15 @@ router.get("/users", auth, adminOnly, async (req, res) => {
       })
     );
 
+    console.log("FINAL USERS SENT:", usersWithStats); // ✅ debug
+
     res.json(usersWithStats);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load users" });
   }
 });
+
 
 /* ================= SINGLE USER (FULL VIEW) ================= */
 router.get("/user/:username", auth, adminOnly, async (req, res) => {
