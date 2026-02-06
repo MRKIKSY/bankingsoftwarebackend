@@ -2,7 +2,8 @@ const express = require("express");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Investment = require("../models/Investment");
-const sendReminder = require("../utils/sendReminder");
+const sendReminder = require("../utils/sendAdminEmail");
+
 
 
 const { auth, adminOnly } = require("../middleware/auth");
