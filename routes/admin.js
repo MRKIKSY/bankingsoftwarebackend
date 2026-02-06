@@ -2,7 +2,8 @@ const express = require("express");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
 const Investment = require("../models/Investment");
-const sendReminder = require("../routes/remind");
+const sendReminder = require("../utils/sendReminder");
+
 
 const { auth, adminOnly } = require("../middleware/auth");
 
@@ -199,31 +200,28 @@ router.post("/withdraw/reject/:id", auth, adminOnly, async (req, res) => {
 router.post("/remind/:username", auth, adminOnly, async (req, res) => {
   try {
     let { username } = req.params;
-
     username = username.trim();
-
-    console.log("REMIND PARAM:", username);
 
     const user = await User.findOne({
       $expr: {
-        $eq: [{ $trim: { input: "$username" } }, username]
+        $eq: [
+          { $trim: { input: "$username" } },
+          username
+        ]
       }
     });
 
-    console.log("FOUND USER:", user?.username);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     await sendReminder(user);
 
     res.json({ detail: `Reminder sent to ${user.username}` });
   } catch (err) {
-    console.error("REMIND ERROR:", err);
-    res.status(500).json({ error: "Failed to send reminder" });
+    console.error("REMINDER ERROR:", err);
+    res.status(500).json({ error: err.message });
   }
 });
+
 
 
 /* ================= USERS CONTACT INFO ================= */
