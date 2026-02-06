@@ -204,35 +204,27 @@ router.post("/remind/:username", auth, adminOnly, async (req, res) => {
       return res.status(400).json({ error: "Username missing" });
     }
 
-    console.log("REMIND USER:", username);
+    console.log("REMIND FOR:", username);
 
-    const user = await User.findOne({ username: username.trim() });
+    const user = await User.findOne({
+      username: { $regex: `^${username.trim()}$`, $options: "i" }
+    });
+
+    console.log("FOUND USER:", user?.username);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Example reminder transaction
-    const tx = await Transaction.create({
-      user_id: user._id,
-      type: "credit",
-      amount: 0,
-      status: "approved",
-      description: "Admin reminder sent",
-      created_at: new Date(),
-    });
+    await sendReminder(user);
 
-    console.log("REMINDER TX:", tx._id);
-
-    return res.json({
-      success: true,
-      message: `Reminder sent to ${user.username}`,
-    });
+    res.json({ detail: `Reminder sent to ${user.username}` });
   } catch (err) {
     console.error("REMIND ERROR:", err);
-    return res.status(500).json({ error: "Failed to send reminder" });
+    res.status(500).json({ error: "Failed to send reminder" });
   }
 });
+
 
 
 /* ================= USERS CONTACT INFO ================= */
