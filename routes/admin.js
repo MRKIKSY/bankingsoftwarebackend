@@ -198,16 +198,16 @@ router.post("/withdraw/reject/:id", auth, adminOnly, async (req, res) => {
 /* ================= SEND USER REMINDER ================= */
 router.post("/remind/:username", auth, adminOnly, async (req, res) => {
   try {
-    const { username } = req.params;
+    let { username } = req.params;
 
-    if (!username) {
-      return res.status(400).json({ error: "Username missing" });
-    }
+    username = username.trim();
 
-    console.log("REMIND FOR:", username);
+    console.log("REMIND PARAM:", username);
 
     const user = await User.findOne({
-      username: { $regex: `^${username.trim()}$`, $options: "i" }
+      $expr: {
+        $eq: [{ $trim: { input: "$username" } }, username]
+      }
     });
 
     console.log("FOUND USER:", user?.username);
@@ -224,7 +224,6 @@ router.post("/remind/:username", auth, adminOnly, async (req, res) => {
     res.status(500).json({ error: "Failed to send reminder" });
   }
 });
-
 
 
 /* ================= USERS CONTACT INFO ================= */
