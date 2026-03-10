@@ -33,6 +33,7 @@ app.use("/paystack", paystackWebhook);
 const allowedOrigins = [
   "https://www.localnairainvest.com",
   "https://api.localnairainvest.com",
+  'http://localhost:51266',
 ];
 
 app.use(
