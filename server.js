@@ -34,6 +34,8 @@ const allowedOrigins = [
   "https://www.localnairainvest.com",
   "https://api.localnairainvest.com",
   'http://localhost:51266',
+  'http://localhost:51706'
+
 ];
 
 app.use(
