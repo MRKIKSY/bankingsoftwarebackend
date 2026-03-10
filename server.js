@@ -111,6 +111,25 @@ const app = express(); // MUST be first
 // ================= CRON =================
 require("./cron/investmentCron");
 
+// ================= ROUTES =================
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/user");
+const adminRoutes = require("./routes/admin");
+const investRoutes = require("./routes/invest");
+const remindRoute = require("./routes/remind");
+const notifyAdminRoute = require("./routes/notifyAdmin");
+const investCancelRoute = require("./routes/investCancel");
+const adminApproveInvestment = require("./routes/adminApproveInvestment");
+const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
+const payRoutes = require("./routes/pay");
+const paystackWebhook = require("./routes/paystackWebhook");
+
+// ================= MIDDLEWARE =================
+const { auth } = require("./middleware/auth");
+
+// ================= PAYSTACK WEBHOOK =================
+app.use("/paystack", paystackWebhook); // must come before JSON parsers
+
 // ================= CORS =================
 const allowedOrigins = [
   "https://www.localnairainvest.com",
@@ -125,7 +144,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow non-browser requests
+    if (!origin) return callback(null, true); // allow curl/postman
     if (allowedOrigins.includes(origin)) return callback(null, true);
     console.log("Blocked CORS from origin:", origin);
     callback(new Error("CORS not allowed"));
@@ -135,31 +154,9 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-// Handle preflight requests for all routes
-app.options("*", cors());
-
 // ================= BODY PARSERS =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// ================= PAYSTACK WEBHOOK =================
-const paystackWebhook = require("./routes/paystackWebhook");
-app.use("/paystack", paystackWebhook);
-
-// ================= ROUTES =================
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/user");
-const adminRoutes = require("./routes/admin");
-const investRoutes = require("./routes/invest");
-const remindRoute = require("./routes/remind");
-const notifyAdminRoute = require("./routes/notifyAdmin");
-const investCancelRoute = require("./routes/investCancel");
-const adminApproveInvestment = require("./routes/adminApproveInvestment");
-const adminApproveWithdrawal = require("./routes/adminApproveWithdrawal");
-const payRoutes = require("./routes/pay");
-
-// ================= MIDDLEWARE =================
-const { auth } = require("./middleware/auth");
 
 // ================= DATABASE =================
 mongoose
@@ -192,6 +189,7 @@ app.get("/health", (req, res) => {
 const buildPath = path.join(__dirname, "build");
 app.use(express.static(buildPath));
 
+// Catch-all for React routes (ignores API routes)
 app.get(
   /^\/(?!auth|invest|admin|pay|remind|notify-admin|paystack).*$/,
   (req, res) => {
