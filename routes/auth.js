@@ -318,35 +318,35 @@ await user.save({ validateBeforeSave: false });
 
 router.post("/reset-password-otp", async (req, res) => {
   try {
-    let { email, otp, password } = req.body;
+    const { email, otp, password } = req.body;
 
-    if (!email || !otp || !password) {
-      return res.status(400).json({ detail: "All fields are required" });
-    }
-
-    email = email.toLowerCase().trim();
-    otp = otp.trim();
-
-    const user = await User.findOne({
-      email,
-      reset_otp: otp,
-      reset_otp_expiry: { $gt: Date.now() },
-    });
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ detail: "Invalid OTP or expired" });
+      return res.status(404).json({ detail: "User not found" });
     }
 
-    user.password = await bcrypt.hash(password, 10);
-    user.reset_otp = undefined;
-    user.reset_otp_expiry = undefined;
+    if (user.otp !== otp) {
+      return res.status(400).json({ detail: "Invalid OTP" });
+    }
 
-    await user.save();
+    const bcrypt = require("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    res.json({ detail: "Password reset successful" });
+    await User.updateOne(
+      { email },
+      {
+        $set: {
+          password: hashedPassword,
+          otp: null
+        }
+      }
+    );
 
-  } catch (err) {
-    console.error("RESET PASSWORD ERROR:", err);
+    res.json({ message: "Password reset successful" });
+
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:", error);
     res.status(500).json({ detail: "Server error" });
   }
 });
