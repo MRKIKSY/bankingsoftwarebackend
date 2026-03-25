@@ -270,11 +270,15 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ detail: "If email exists, instructions sent" });
     }
 
-    // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.reset_otp = otp;
-    user.reset_otp_expiry = Date.now() + 15 * 60 * 1000; // 15 minutes
-    await user.save();
+   
+
+// Generate OTP
+const otp = Math.floor(100000 + Math.random() * 900000).toString();
+user.reset_otp = otp;
+user.reset_otp_expiry = Date.now() + 15 * 60 * 1000;
+
+// IMPORTANT FIX
+await user.save({ validateBeforeSave: false });
 
     // Link to the frontend reset page
     const resetLink = `https://www.localnairainvest.com/reset-password-otp?email=${encodeURIComponent(user.email)}`;
